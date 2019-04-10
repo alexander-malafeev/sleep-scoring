@@ -21,7 +21,7 @@ You will need a GPU to train the network, but application of already trained mod
 
 ### Installing
 
-After you have downloaded the folder with files you would need to download BioSig package (http://biosig.sourceforge.net/). We need it to read edf files, you should put the folder with BioSig into edf2mat folder. Then the path to BioSig will be for example ./edf2mat/biosig4octmat-3.4.0.
+After you have downloaded the folder with files you would need to download the external files needed to read edf. We used the library available at https://ch.mathworks.com/matlabcentral/fileexchange/31900-edfread. Put the mat files you get by following the link into edf2mat folder.
 
 You also should install Matlab (we used 2018 version), Python 3, Keras and Tensorflow.
 
