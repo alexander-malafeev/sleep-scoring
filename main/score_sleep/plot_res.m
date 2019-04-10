@@ -63,6 +63,8 @@ for f = 1:length(fileList)
     axis([eaxis(1) eaxis(end) 0 40])
     ylabel('Frequency [Hz]')
     xlabel('time [h]');
+    
+    linkaxes([ax2,ax3],'x')
     % without this option spectrogram will disappear
     set(gcf,'render','painters')
     colormap(ax3,'jet');
