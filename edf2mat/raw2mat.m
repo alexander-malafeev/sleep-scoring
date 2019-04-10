@@ -1,13 +1,11 @@
 clear; clc; close all; fclose all;
 
-% we need functions from BioSig to read edf files
-% you should download BioSig package yourself
-addpath ./biosig4octmat-3.4.0/biosig/t200_FileAccess
-addpath ./biosig4octmat-3.4.0/biosig/t250_ArtifactPreProcessingQualityControl
+% we need a function to read edf
+% download matlab scripts from https://ch.mathworks.com/matlabcentral/fileexchange/31900-edfread
+% and put them into the directory with this file
 
-addpath ./../tools/
 % it is the path to the folder with edf files
-readPath = './../EEG_data/'
+readPath = './../EDF/'
 
 % directory with the output data
 writePath = '../mat/'
@@ -22,11 +20,11 @@ writePath = '../mat/'
 C3_lbl = 'C3';
 A2_lbl = 'A2';
 
-C3A2_lbl = 'C3:A2';
-C4A1_lbl = 'C4:A1';
-LOC_lbl = 'EOG1';
-ROC_lbl = 'EOG2';
-EMG_lbl = 'EMG+:EMG-';
+C3A2_lbl = 'C3_A2';
+C4A1_lbl = 'C4_A1';
+LOC_lbl = 'ROC_A1';
+ROC_lbl = 'LOC_A1';
+EMG_lbl = 'EMG';
 
 
 % frequency of powerline; 60 Hz in USA
@@ -45,7 +43,7 @@ windowl=5; % seconds
 % resolution of a spectrogram in frequency axis
 df=1/windowl;
 % default sampling rate
-fs = 200;
+fs = 256;
 
 % indexes of spectrogram columns to compute power in certain ranges
 ind_pEMG=15/df+1:30/df+1; % 15-30 Hz range of EMG
@@ -61,7 +59,7 @@ if ( ~exist([writePath ], 'dir') )
 end
 
 
-fileList = dir( [ readPath '*.edf' ] )
+fileList = dir( [ readPath '*.REC' ] )
 
 
 
@@ -70,28 +68,27 @@ for f = 1:length(fileList)
     recording  = fileList(f).name
     recording = recording(1:end-4);
     
-    fileName = [recording '.edf'];
-     
-    % this function from BioSig opens the edf file and reads the header
-    [HDR] = sopen([readPath, fileName],'r');
-    
+    fileName = [recording '.REC'];
+    [HDR, data_rec] = edfread([readPath, fileName]);
+    data_rec = data_rec';
+
     % here we are finding which rows of data matrix correspond to 
     % the channels of interest
     %chF3A2=ismember(HDR.Label,'F3-A2','rows');
-    chC3A2=ismember(HDR.Label,C3A2_lbl);
+    chC3A2=ismember(HDR.label,C3A2_lbl);
     %chO1A2=ismember(HDR.Label,'O1-A2','rows');
     %chF4A1=ismember(HDR.Label,'F4-A1','rows');
-    chC4A1=ismember(HDR.Label,C4A1_lbl);
+    chC4A1=ismember(HDR.label,C4A1_lbl);
     %chO2A1=ismember(HDR.Label,'O2-A1','rows');
     
-    chC3=ismember(HDR.Label,C3_lbl);
-    chA2=ismember(HDR.Label,A2_lbl);
+    chC3=ismember(HDR.label,C3_lbl);
+    chA2=ismember(HDR.label,A2_lbl);
     
-    chEMG=ismember(HDR.Label,EMG_lbl);
+    chEMG=ismember(HDR.label,EMG_lbl);
     %chEMG1=ismember(HDR.Label,'CHIN1-CHIN2','rows');
     %chEMG2=ismember(HDR.Label,'CHIN2-CHIN3','rows');
-    chEOG1=ismember(HDR.Label,LOC_lbl);
-    chEOG2=ismember(HDR.Label,ROC_lbl);
+    chEOG1=ismember(HDR.label,LOC_lbl);
+    chEOG2=ismember(HDR.label,ROC_lbl);
     
     % maximal index of used channels 
     % we need it to trim the data matrix
@@ -99,12 +96,14 @@ for f = 1:length(fileList)
 
 
     % some data from the header
-    fs=HDR.SampleRate; %sample rate
-    fse=HDR.SampleRate; %sample rate EOG
-    fsm=HDR.SampleRate; %sample rate EMG
-    
+    %fs=HDR.SampleRate; %sample rate
+    %fse=HDR.SampleRate; %sample rate EOG
+    %fsm=HDR.SampleRate; %sample rate EMG
+    fs = HDR.frequency(chC3A2);
+    fse = fs;
+    fsm = fs;
     % how many 20 second epochs are in our file
-    maxep=floor(HDR.NRec/(epochl/HDR.Dur)); 
+    maxep=floor(HDR.records/(epochl/HDR.duration)); 
 
     % arrays for the spectrogramms 
     % we will use only PC3A2, but you can uncomment and use others as well
@@ -120,17 +119,16 @@ for f = 1:length(fileList)
     powEMG=zeros(1,maxep); % EMG power in the band 15-30 Hz
     
 
-    % matrix for our data [Nsamples, nChan] 
-    data_rec = zeros( maxep*fs*epochl, nChan );
 
     %%S = zeros(1, maxep*epochl*fs);
+    %HDR.AS.SPR = HDR.AS.SPR*0;
     for ep=1:maxep
         % read epochl seconds from the file
-        [data,HDR]=sread(HDR,epochl);
-
+        %[data,HDR]=sread(HDR,epochl);
+        
         % put corresponding epoch into the data matrix
-        data_rec( (ep-1)*epochl*fs+1:ep*epochl*fs, : ) = data(:,1:nChan);
-
+        %data_rec( (ep-1)*epochl*fs+1:ep*epochl*fs, : ) = data(:,1:nChan);
+        data(:,:) = data_rec( (ep-1)*epochl*fs+1:ep*epochl*fs, : );
         % compute PEMG
         PEMG=pwelch(data(:,chEMG),hanning(windowl*fs),0,windowl*fs,fs);
 
@@ -160,8 +158,7 @@ for f = 1:length(fileList)
     %%C4A1 = data_rec(:,chC4A1);
 
     % get channels of interest from the data matrix
-    C3 = data_rec(:,chC3);
-    A2 = data_rec(:,chA2);
+
 
 
     %%maxep =  floor(numel(C3A2)/(fs*epochl));
@@ -175,15 +172,15 @@ for f = 1:length(fileList)
 
     % truncate signals, i.e. it should contain integer number of epochs
     data_rec = data_rec(1:maxep*epochl*fs,:);
-
+    %C3A2 = data_rec(:,chC3A2);
+    %A2 = data_rec(:,chA2);
     % structure Data is what we are going to save
     Data.windowl = windowl;
 
 
     FFT = PC3A2;
 
-    %close file
-    [HDR]=sclose(HDR); 
+
 
     % this array contains stages of sleep
     % we set it to zeros because for scoring your data it is not needed
@@ -193,7 +190,7 @@ for f = 1:length(fileList)
     Data.stages = stages;
 
     % save the channel's labels
-    Data.channel_names = HDR.Label;
+    Data.channel_names = HDR.label;
 
 
     % we resample the data to 128 Hz; your data should have sampling rate
@@ -206,8 +203,8 @@ for f = 1:length(fileList)
     p = fn/g;
     q = fs/g;
 
-    C3 = resample(C3,p,q);
-    A2 = resample(A2,p,q);
+    
+    %A2 = resample(A2,p,q);
     % C3A2 = resample(C3A2,p,q);
     % C4A1 = resample(C4A1,p,q);
     % F3A2 = resample(C3A2,p,q);
@@ -216,6 +213,7 @@ for f = 1:length(fileList)
     % O2A1 = resample(O2A1,p,q);
 
     % EMG and ocular channels
+    C3A2 = resample(data_rec(:,chC3A2),p,q);
     sEMG = resample(data_rec(:,chEMG),p,q);
     sLOC = resample(data_rec(:,chEOG1),p,q);
     sROC = resample(data_rec(:,chEOG2),p,q);
@@ -225,7 +223,7 @@ for f = 1:length(fileList)
     Data.epochl = epochl;
 
     % save the EEG signal
-    C3A2 = C3-A2;
+    %C3A2 = C3-A2;
     Data.C3A2 = reshape(C3A2, [Data.fs*epochl, maxep]);
 
     % here we compute the spectrogram
