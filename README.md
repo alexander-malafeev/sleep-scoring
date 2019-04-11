@@ -21,7 +21,7 @@ You will need a GPU to train the network, but application of already trained mod
 
 ### Installing
 
-After you have downloaded the folder with files you would need to download the external files needed to read edf. We used the library available at https://ch.mathworks.com/matlabcentral/fileexchange/31900-edfread. Put the mat files you get by following the link into edf2mat folder.
+After you have downloaded the folder with files you would need to download the external files needed to read edf. We used the library written by Brett Shoelson, it is available at https://ch.mathworks.com/matlabcentral/fileexchange/31900-edfread. Put the mat files you get by following the link into edf2mat folder.
 
 You also should install Matlab (we used 2018 version), Python 3, Keras and Tensorflow.
 
