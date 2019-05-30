@@ -59,7 +59,7 @@ if ( ~exist([writePath ], 'dir') )
 end
 
 
-fileList = dir( [ readPath '*.REC' ] )
+fileList = dir( [ readPath '*.edf' ] )
 
 
 
