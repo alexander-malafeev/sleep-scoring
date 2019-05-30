@@ -120,21 +120,7 @@ for f = 1:length(fileList)
     
 
 
-    %%S = zeros(1, maxep*epochl*fs);
-    %HDR.AS.SPR = HDR.AS.SPR*0;
-    for ep=1:maxep
-        % read epochl seconds from the file
-        %[data,HDR]=sread(HDR,epochl);
-        
-        % put corresponding epoch into the data matrix
-        %data_rec( (ep-1)*epochl*fs+1:ep*epochl*fs, : ) = data(:,1:nChan);
-        data(:,:) = data_rec( (ep-1)*epochl*fs+1:ep*epochl*fs, : );
-        % compute PEMG
-        PEMG=pwelch(data(:,chEMG),hanning(windowl*fs),0,windowl*fs,fs);
 
-        % find the power in the 15-30 Hz band
-        powEMG(ep)=sum(PEMG(ind_pEMG));
-    end
 
     % notch filter to remove powerline noise    
     wo = f_powerline/(fs/2);  
@@ -213,10 +199,18 @@ for f = 1:length(fileList)
     % O2A1 = resample(O2A1,p,q);
 
     % EMG and ocular channels
+    
+    C3A2 = zeros(1, maxep*epochl*fn);
+    sEMG = zeros(1, maxep*epochl*fn);
+    sLOC = zeros(1, maxep*epochl*fn);
+    sROC = zeros(1, maxep*epochl*fn);
+    
     C3A2 = resample(data_rec(:,chC3A2),p,q);
-    sEMG = resample(data_rec(:,chEMG),p,q);
     sLOC = resample(data_rec(:,chEOG1),p,q);
     sROC = resample(data_rec(:,chEOG2),p,q);
+    if sum(chEMG)>0
+        sEMG = resample(data_rec(:,chEMG),p,q);
+    end
 
     % set sampling rate of the Data structure to the new frequency
     Data.fs = fn;
