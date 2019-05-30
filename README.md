@@ -49,6 +49,8 @@ or use one of the networks we trained.
 To use pretrained network you can run the script predict.py. You should set the variable n_channels.
 It can be 1, 2 or 3. The network will use 1 EEG channels, 1 EEG + 2 EOG channels, or 1 EEG + 2 EOG + 1 EMG correspondingly.
 
+If your recording is longer than 8 hours I suggest to use a script predict_split.py. It splits the recording into segments (by default 1000 epochs long) to make sure there would be enough memory.
+
 The .mat files with the results will be stored in the folder ./score_sleep/pred/
 After the recordings are scored you can plot the result by using the matlab script plot_res.m located in the folder score sleep. Script will product the hypnograms and store them in the folder ./score_sleep/plot.
 
